@@ -1,5 +1,6 @@
 result_auchor.jpg
 result_fg.jpg
 model_save/ctpn_5.pth
+*.pyc
 __pycache__/*
 __pycache__
