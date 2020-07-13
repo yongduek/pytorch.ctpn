@@ -2,3 +2,4 @@ result_auchor.jpg
 result_fg.jpg
 model_save/ctpn_5.pth
 __pycache__/*
+__pycache__
