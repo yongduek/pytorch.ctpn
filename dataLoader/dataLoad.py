@@ -20,29 +20,29 @@ import os
 # ic15_train_gt_dir = ic15_root_dir + 'train_gt/'
 
 
-ic15_root_dir = '/home/aistudio/work/data/MTWI2018/'
-ic15_train_data_dir = ic15_root_dir + 'image/'
-ic15_train_gt_dir = ic15_root_dir + 'label/'
+ic15_root_dir = '/home/yndk/datasets/icdar2015/train/'  #/aistudio/work/data/MTWI2018/'
+ic15_train_data_dir = ic15_root_dir + 'img/' #'image/'
+ic15_train_gt_dir = ic15_root_dir + 'gt/'    #'label/'
 
 
 
 random.seed(123456)
 
 
-def get_images(img_path,max_size):
+def get_images(img_path, max_size):
     img = Image.open(img_path).convert('RGB')
     img = np.array(img)
     re_im, im_scale = resize_image(img, max_size)
-    return re_im,im_scale,img.shape
+    return re_im, im_scale, img.shape
 
-def get_auchor_bbox(gt_path,im_scale,im_shape,re_im_show):
+def get_auchor_bbox(gt_path, im_scale, im_shape, re_im_show):
     polys = []
-    with open(gt_path, 'r',encoding='utf-8') as f:
+    with open(gt_path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
     tag = []
     for line in lines:
         splitted_line = line.strip().lower().replace('\ufeff','').split(',')
-        if ('#' in splitted_line[-1]):
+        if ('#' in splitted_line[-1]): # Here '#' means there seems to be a text/word but unreadable by human annotator
             tag.append(-1)
         else:
             tag.append(1)
@@ -54,6 +54,7 @@ def get_auchor_bbox(gt_path,im_scale,im_shape,re_im_show):
             poly = orderConvex(poly)
         except:
             poly = np.array([[0,0],[1,1],[2,2],[1,0]]).astype(np.float)
+            print('what the heck? this must be an error!')
         polys.append(poly)
 
     res_polys = []
@@ -74,12 +75,12 @@ def get_auchor_bbox(gt_path,im_scale,im_shape,re_im_show):
             y_min = np.min(r[:, 1])
             x_max = np.max(r[:, 0])
             y_max = np.max(r[:, 1])
-            res_polys.append([x_min, y_min, x_max, y_max,1, tag_t])
+            res_polys.append([x_min, y_min, x_max, y_max, 1, tag_t])
 
-    return res_polys,re_im_show
+    return res_polys, re_im_show
 
 class IC15Loader(data.Dataset):
-    def __init__(self,size_list):
+    def __init__(self,size_list): #, train_data_image_path, train_data_label_path):
         self.size_list = size_list
         self.train_size = size_list[-1]
 
@@ -90,7 +91,7 @@ class IC15Loader(data.Dataset):
         self.gt_paths = []
 
         for data_dir, gt_dir in zip(data_dirs, gt_dirs):
-            img_names =os.listdir(data_dir)
+            img_names = os.listdir(data_dir)
             img_paths = []
             gt_paths = []
             for idx, img_name in enumerate(img_names):
@@ -117,18 +118,18 @@ class IC15Loader(data.Dataset):
 
     def __getitem__(self, index):
         img_path = self.img_paths[index]
-        img, img_scale,img_shape = get_images(img_path,self.train_size)
+        img, img_scale, img_shape = get_images(img_path, self.train_size)
         h, w, c = img.shape
         im_info = np.array([h, w, c]).reshape([1, 3])
         im_info = torch.from_numpy(im_info)
         gt_path_index = torch.from_numpy(np.array([index]))
-        img_scale =  torch.from_numpy(np.array([img_scale]))
-        img_shape =  torch.from_numpy(np.array([img_shape]))
+        img_scale = torch.from_numpy(np.array([img_scale]))
+        img_shape = torch.from_numpy(np.array([img_shape]))
         img = transforms.ToTensor()(img)
 #         img = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(img)
-        return img, img_scale,img_shape,gt_path_index,im_info
+        return img, img_scale, img_shape, gt_path_index, im_info
 
-def get_bboxes(img,gt_files,gt_path_index,img_scales,img_shapes):
+def get_bboxes(img, gt_files, gt_path_index, img_scales, img_shapes):
     """
     :param img: 图片
     :param gt_files: 训练集gt的txt文件
@@ -138,10 +139,10 @@ def get_bboxes(img,gt_files,gt_path_index,img_scales,img_shapes):
     
     """
     batch_res_polys = []
-    for i in range(img.shape[0]):
+    for i in range(img.shape[0]): # for img in img_batch
         img_show = img[i].cpu().numpy() * 255
         img_show = img_show.transpose((1, 2, 0)).copy()
-        res_polys, img_show = get_auchor_bbox(gt_files[gt_path_index[i]], img_scales[i].numpy()[0],img_shapes[i].numpy()[0], img_show)
+        res_polys, img_show = get_auchor_bbox(gt_files[gt_path_index[i]], img_scales[i].numpy()[0], img_shapes[i].numpy()[0], img_show)
         batch_res_polys.append(res_polys)
 
     return  batch_res_polys

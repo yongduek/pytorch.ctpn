@@ -107,40 +107,26 @@ class CTPN_Model(nn.Module):
     def forward(self, x, val=False):
         
         x = self.cnn(x)
-        
-#         #########################################################        
-#         b ,_ ,_ ,_ = x.shape 
-#         batch_features = []
-#         for i in range(b):
-#             feature = self.rnn(x[i].unsqueeze(0))
-#             batch_features.append(feature.squeeze(0))
-
-#         x = torch.stack(batch_features,0)
-#         x = self.FC(x)
-#         x = F.relu(x, inplace=True)
-#         ###########################################################
-    
+            
         ###########################
-        x = self.rpn(x)
+        x = self.rpn(x)  # b, c=512, h, w
 
         x1 = x.permute(0,2,3,1).contiguous()  # channels last
-        b = x1.size()  # batch_size, h, w, c
-        x1 = x1.view(b[0]*b[1], b[2], b[3])
+        b = x1.size()  # batch_size, h, w, c=512
+        x1 = x1.view(b[0]*b[1], b[2], b[3])  # b*h, w, c=512
 
-        x2, _ = self.brnn(x1)
+        x2, _ = self.brnn(x1) # b*h, w, c=256
 
-        xsz = x.size()
-        x3 = x2.view(xsz[0], xsz[2], xsz[3], 256)  # torch.Size([4, 20, 20, 256])
+        xsz = x.size() # b, c, h, w
+        x3 = x2.view(xsz[0], xsz[2], xsz[3], 256)  # torch.Size([4, 20, 20, 256])   # b, h, w, c=256
 
-        x3 = x3.permute(0,3,1,2).contiguous()  # channels first
-        x3 = self.lstm_fc(x3)
+        x3 = x3.permute(0,3,1,2).contiguous()  # channels first  # b, c=256, h, w
+        x3 = self.lstm_fc(x3)  # b, c=512, h, w
         x = x3
         ############################
-
-        
         
         vertical_pred = self.vertical_coordinate(x)
         score = self.score(x)
         side_refinement = self.side_refinement(x)
         
-        return score,vertical_pred,side_refinement
+        return score, vertical_pred, side_refinement

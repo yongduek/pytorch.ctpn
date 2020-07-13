@@ -9,7 +9,7 @@
 """
 import os
 import argparse
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 import torch
 from torch import optim
 import numpy as np
@@ -82,15 +82,15 @@ def main(args):
             vertical_pred = vertical_pred.permute(0, 2, 3, 1)
             side_refinement = side_refinement.permute(0, 2, 3, 1)
 
-            batch_res_polys = get_bboxes(imgs,gt_files, gt_path_indexs, img_scales,im_shapes)
+            batch_res_polys = get_bboxes(imgs, gt_files, gt_path_indexs, img_scales, im_shapes)
 
             batch_loss_tatal = []
             batch_loss_cls = []
             batch_loss_ver = []
             batch_loss_refine = []
-            for i in range(image.shape[0]):
+            for i in range(image.shape[0]): # for each in batch_image
 
-                image_ori =  (imgs[i].numpy()*255).transpose((1,2,0)).copy()
+                image_ori = (imgs[i].numpy()*255).transpose((1,2,0)).copy()
 
                 gt_boxes = np.array(batch_res_polys[i])
 
@@ -152,9 +152,9 @@ def main(args):
 if __name__=="__main__":
     
     parser = argparse.ArgumentParser(description='Hyperparams')
-    parser.add_argument('--base_model', nargs='?', type=str, default='shufflenet_v2_x1_0',help='mobilenet_v3_large,mobilenet_v3_small, shufflenet_v2_x1_0, shufflenet_v2_x0_5, vgg11, vgg11_bn, vgg16, vgg16_bn, vgg19, vgg19_bn, resnet18, resnet34 ,resnet50, resnet101, resnet152')
+    parser.add_argument('--base_model', nargs='?', type=str, default='vgg16',help='mobilenet_v3_large,mobilenet_v3_small, shufflenet_v2_x1_0, shufflenet_v2_x0_5, vgg11, vgg11_bn, vgg16, vgg16_bn, vgg19, vgg19_bn, resnet18, resnet34 ,resnet50, resnet101, resnet152')
     parser.add_argument('--optimizer', nargs='?', type=str, default='SGD')
-    parser.add_argument('--batch_size', nargs='?', type=int, default=8, help='Batch Size') 
+    parser.add_argument('--batch_size', nargs='?', type=int, default=4, help='Batch Size') 
     parser.add_argument('--size_list', nargs='?', type=int, default = [1048], help='img max Size when train') #[768,928,1088,1200,1360]
     parser.add_argument('--num_worker', nargs='?', type=int, default=0, help='num_worker to train')
     parser.add_argument('--lr', nargs='?', type=float, default=1e-3, help='Learning Rate') 
@@ -169,7 +169,5 @@ if __name__=="__main__":
     args = parser.parse_args()
     
     main(args)
-
-
 
 

@@ -9,7 +9,7 @@ from utils.rpn_msr.config import Config as cfg
 from utils.rpn_msr.generate_anchors import generate_anchors
 import pdb
 
-def anchor_target_layer(image,rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], anchor_scales=[16, ]):
+def anchor_target_layer(image, rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], anchor_scales=[16, ]):
     """
     Assign anchors to ground-truth targets. Produces anchor classification
     labels and bounding-box regression targets.
@@ -30,12 +30,11 @@ def anchor_target_layer(image,rpn_cls_score, gt_boxes, im_info, _feat_stride=[16
     rpn_bbox_outside_weights: (HxWxA, 4) used to balance the fg/bg,
                             beacuse the numbers of bgs and fgs mays significiantly different
     """
-    try:
-   
+    try:  
         for item in gt_boxes:
-            color = (0,0,255)
-            image1 = cv2.rectangle(image,(int(item[0]),int(item[1])),(int(item[2]),int(item[3])),color)
-        cv2.imwrite('result_auchor.jpg',image1)
+            color = (0, 0, 255) # red
+            image1 = cv2.rectangle(image, (int(item[0]),int(item[1])), (int(item[2]),int(item[3])), color)
+        cv2.imwrite('result_auchor.jpg', image1)
     except:
         print('warning!!!!!')
 
